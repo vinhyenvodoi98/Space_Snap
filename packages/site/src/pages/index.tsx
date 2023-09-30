@@ -18,7 +18,9 @@ import {
 import { defaultSnapOrigin } from '../config';
 import Table from '../components/Table';
 import Search from '../components/Search';
-import { getBalanceOf } from '../utils/space';
+import { getBalanceOf, getTokenOfOwnerByIndex } from '../utils/space';
+import { filterSpaceNFT, isValidEthereumAddress } from '../helpers';
+import apiOpenseaCall from '../utils/opensea';
 
 const Container = styled.div`
   display: flex;
@@ -51,7 +53,7 @@ const CardContainer = styled.div`
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 64.8rem;
+  max-width: 100rem;
   width: 100%;
   height: 100%;
   margin-top: 1.5rem;
@@ -96,13 +98,17 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-  const data = [
-    ['Name', 'Age', 'Country'],
-    ['John Doe', '25', 'USA'],
-  ];
+  const titles = [
+    { key: 'image', title: 'Image' },
+    { key: 'name', title: 'Domain' },
+    { key: 'prize', title: 'Prize' },
+    { key: 'expiration', title: 'Expiration Day' },
+    { key: 'key5', title: 'Send' },
+  ]
 
   const [searchTerm, setSearchTerm] = useState('');
   const [balance, setBalance] = useState('')
+  const [spaceNfts, setSpaceNfts] = useState<any>([])
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -111,8 +117,15 @@ const Index = () => {
   useEffect(() => {
     const getBalance = async () => {
       const bl = await getBalanceOf(searchTerm, state.contract);
-      console.log(bl)
       setBalance(bl)
+      if(isValidEthereumAddress(searchTerm)){
+        const {nfts} = await apiOpenseaCall({url:`chain/bsc/account/${searchTerm}/nfts?limit=50`})
+        const spaceNfts = filterSpaceNFT(nfts);
+        setSpaceNfts(spaceNfts)
+      }
+      // 0x2484930A74674AA452cB5b83599A2797f0e3a939
+      // const tokenId = await getTokenOfOwnerByIndex(searchTerm, state.contract)
+      // console.log(tokenId)
     }
 
     if(searchTerm.length > 0) {
@@ -147,8 +160,6 @@ const Index = () => {
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
-
-
 
   return (
     <Container>
@@ -190,7 +201,7 @@ const Index = () => {
         )}
         <Search value={searchTerm} onChange={handleSearch} />
         {/* <div>{balance}</div> */}
-        <Table data={data}/>
+        <Table titles={titles} columns={spaceNfts}/>
       </CardContainer>
     </Container>
   );

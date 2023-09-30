@@ -1,63 +1,190 @@
-import React from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { BscContractAddress } from '../config/spaceId';
+import { weiToEth } from '../helpers';
+import { MetaMaskContext } from '../hooks';
+import apiOpenseaCall from '../utils/opensea';
+import { apiMetadataCall } from '../utils/space';
+import ExternalLink from './ExternalLink';
+
+interface TableCellProps {
+  width: string;
+}
 
 const TableContainer = styled.div`
-  overflow-x: auto;
-  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  margin-bottom: 1em;
+  margin: 0 auto;
+  border-radius: 15px;
+  overflow: hidden;
+  padding: 20px;
+  background-color: ${({ theme }) => theme.colors.background.alternative};
 `;
 
-const TableElement = styled.table`
-  padding: 1rem;
-  width: 100%;
-  border-collapse: collapse;
-`;
+const TitleContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+`
 
-const TableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f2f2f2;
+const Column = styled.div<TableCellProps>`
+  flex: ${({ width }) => width};
+  padding: 8px 12px;
+  text-align: center;
+
+  &:last-child {
+    border-right: none;
   }
 `;
 
-const TableCell = styled.td`
-  border: 1px solid #ddd;
-  padding: 1rem;
-  text-align: left;
-  word-break: break-all;
+const TableRow = styled.div`
+  display: flex;
+  width: 100%;
+  height: 5rem;
+  align-items: center;
+  margin: 1rem 0 0 0;
 `;
 
-const TableHeader = styled.th`
-  border: 1px solid #ddd;
-  padding: 1rem;
-  text-align: left;
+const TableCell = styled.div<TableCellProps>`
+  flex: ${({ width }) => width};
+  text-align: center;
+  padding: 8px 12px;
 `;
+
+const Divide = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #344b57a6;
+`
+
+const SpaceImage = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+`
+
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`
+
+const PrizeDiv = styled.div`
+  width: 8rem;
+`
 
 interface TableProps {
-  data: string[][];
+  titles: { key: string; title: string }[];
+  columns: Record<string, any>[];
 }
 
-const Table: React.FC<TableProps> = ({ data }) => {
+interface SpaceMetadata {
+  name: string;
+  image: string;
+  attributes: any[];
+}
+
+interface OpenseaOrder {
+  current_price: string;
+}
+
+const widthIndex = (titleIndex: Number) => {
+  return titleIndex === 0
+  ? '10%'
+  : titleIndex === 1
+  ? '20%'
+  : titleIndex === 2
+  ? '10%'
+  : titleIndex === 3
+  ? '10%'
+  : '30%'
+}
+
+const TableRowComponent:React.FC<any> = ({column, titles}:any) => {
+  const [state, dispatch] = useContext(MetaMaskContext);
+  const [metadata, setMetadata] = useState<SpaceMetadata | null>(null)
+  const [orders, setOrders] = useState<OpenseaOrder[]|[]>([])
+
+  useEffect(() => {
+    const getMetadata = async (id:string) => {
+      const metadata = await apiMetadataCall({url:id})
+      setMetadata(metadata as SpaceMetadata)
+
+      const {orders} = await apiOpenseaCall({url:`orders/bsc/seaport/listings?asset_contract_address=${BscContractAddress}&token_ids=${id}&order_by=created_date&order_direction=desc`})
+      setOrders(orders)
+    }
+
+    getMetadata(column.identifier)
+  }, [column.identifier])
+
+  const expirationDay = useMemo(() => {
+    const timestamp = metadata?.attributes.filter( attribute => attribute.trait_type === "Expiration Date")[0].value
+    const date = new Date(timestamp*1000);
+
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Months are 0-indexed, so add 1
+    const day = date.getDate();
+    return `${year}-${month}-${day}`
+  }, [metadata])
+
+  const currentPrize = useMemo(() => {
+    return orders.length > 0 ? state.web3 ? weiToEth(state.web3, orders[0].current_price) : "Loading" : "you can order"
+  },[orders])
+
+
+  return(
+    <TableRow>
+      {titles.map((title: { key: string }, titleIndex: React.Key | null | undefined) => (
+        <TableCell
+          width={widthIndex(titleIndex as Number)}
+          key={titleIndex}
+        >
+          {title.key === "image" ?
+            <SpaceImage src={metadata?.image} alt="nft image"/>
+            :
+            title.key === "expiration" ?
+            expirationDay
+            :
+            title.key === "prize" ?
+            <Row>
+              <PrizeDiv>{`${currentPrize} BNB`}</PrizeDiv>
+              <ExternalLink url={`https://opensea.io/assets/bsc/${BscContractAddress}/${column.identifier}`}/>
+            </Row>
+            : title.key === "name" ?
+            <Row>
+              {column[title.key]}
+            </Row>
+            :
+            column[title.key]
+          }
+        </TableCell>
+        ))}
+    </TableRow>
+  )
+}
+
+const Table: React.FC<TableProps> = ({ titles, columns }) => {
   return (
     <TableContainer>
-      <TableElement>
-        <thead>
-          <TableRow>
-            {data[0].map((header, index) => (
-              <TableHeader key={index}>{header}</TableHeader>
-            ))}
-          </TableRow>
-        </thead>
-        <tbody>
-          {data.slice(1).map((row, index) => (
-            <TableRow key={index}>
-              {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex}>{cell}</TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </tbody>
-      </TableElement>
+      <TitleContainer>
+        {titles.map((title, index) => (
+          <Column
+            width={widthIndex(index as Number)}
+            key={index}
+          >
+            {title.key === "name" ?
+              <Row>{title.title}</Row>
+            :
+              title.title
+            }
+          </Column>
+        ))}
+        </TitleContainer>
+      <Divide/>
+
+      {columns.map((column, index) => (
+        <TableRowComponent key={index} column={column} titles={titles}/>
+      ))}
     </TableContainer>
   );
 };

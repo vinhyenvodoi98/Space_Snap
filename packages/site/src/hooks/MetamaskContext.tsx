@@ -7,7 +7,7 @@ import {
   useReducer,
 } from 'react';
 import Web3 from 'web3';
-import { ContractABI, ContractAddress } from '../config/spaceId';
+import { ContractABI, BscContractAddress } from '../config/spaceId';
 
 import { Snap } from '../types';
 import { connectAccount, detectSnaps, getSnap, isFlask } from '../utils';
@@ -130,7 +130,7 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
         payload: account,
       });
 
-      const contract = new web3.eth.Contract(ContractABI, ContractAddress);
+      const contract = new web3.eth.Contract(ContractABI, BscContractAddress);
       dispatch({
         type: MetamaskActions.SetContract,
         payload: contract,

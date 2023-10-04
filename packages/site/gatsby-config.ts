@@ -8,7 +8,7 @@ const config: GatsbyConfig = {
     'gatsby-plugin-svgr',
     'gatsby-plugin-styled-components',
     {
-      resolve: 'gatsby-plugin-manifest',
+      resolve: "@vercel/gatsby-plugin-vercel-builder",
       options: {
         name: 'Template Snap',
         icon: 'src/assets/logo.svg',

@@ -4,7 +4,7 @@ const instance = axios.create({
   baseURL: 'https://api.opensea.io/v2', // Đổi thành URL cụ thể của API bạn muốn gọi
   headers: {
     'X-API-KEY': process.env.GATSBY_OPENSEA_API_KEY,
-    'accept': 'application/json',
+    accept: 'application/json',
   },
 });
 

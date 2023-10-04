@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "@metamask/providers": "^9.0.0",
+    "@vercel/gatsby-plugin-vercel-builder": "^2.0.7",
+    "axios": "^1.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",

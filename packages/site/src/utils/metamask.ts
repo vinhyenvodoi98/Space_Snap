@@ -73,7 +73,9 @@ export const isFlask = async () => {
 export const connectAccount = async () => {
   const web3 = new Web3(window.ethereum);
 
-  const account = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  const account = await window.ethereum.request({
+    method: 'eth_requestAccounts',
+  });
   const chainId = await web3.eth.getChainId();
 
   if (Number(chainId) !== 56) {
@@ -86,17 +88,18 @@ export const connectAccount = async () => {
           nativeCurrency: {
             name: 'BNB',
             symbol: 'bnb',
-            decimals: 18
+            decimals: 18,
           },
           rpcUrls: ['https://bsc-dataseed.binance.org/'],
-          blockExplorerUrls: ['https://bscscan.com/']
-        }
-      ]
+          blockExplorerUrls: ['https://bscscan.com/'],
+        },
+      ],
     });
+
     // Switch to Binance Smart Chain Mainnet
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: '0x38' }]
+      params: [{ chainId: '0x38' }],
     });
   }
   return account;

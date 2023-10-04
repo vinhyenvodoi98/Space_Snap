@@ -19,8 +19,9 @@ import { defaultSnapOrigin } from '../config';
 import Table from '../components/Table';
 import Search from '../components/Search';
 import { getBalanceOf, getTokenOfOwnerByIndex } from '../utils/space';
-import { filterSpaceNFT, isValidEthereumAddress } from '../helpers';
+import { endsWithArb, endsWithBnb, filterSpaceNFT, isValidEthereumAddress } from '../helpers';
 import apiOpenseaCall from '../utils/opensea';
+import Send from '../components/Send';
 
 const Container = styled.div`
   display: flex;
@@ -96,6 +97,12 @@ const ErrorMessage = styled.div`
   }
 `;
 
+export enum InputType {
+  bnb = 'bnb',
+  arb = 'arb',
+  address = 'address',
+}
+
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const titles = [
@@ -109,6 +116,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [balance, setBalance] = useState('')
   const [spaceNfts, setSpaceNfts] = useState<any>([])
+  const [inputType, setInputType] = useState<InputType | null>(null)
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -119,13 +127,19 @@ const Index = () => {
       const bl = await getBalanceOf(searchTerm, state.contract);
       setBalance(bl)
       if(isValidEthereumAddress(searchTerm)){
+        setInputType(InputType.address)
         const {nfts} = await apiOpenseaCall({url:`chain/bsc/account/${searchTerm}/nfts?limit=50`})
         const spaceNfts = filterSpaceNFT(nfts);
         setSpaceNfts(spaceNfts)
       }
-      // 0x2484930A74674AA452cB5b83599A2797f0e3a939
-      // const tokenId = await getTokenOfOwnerByIndex(searchTerm, state.contract)
-      // console.log(tokenId)
+
+      if(endsWithBnb(searchTerm)){
+        setInputType(InputType.bnb)
+      }
+
+      if(endsWithArb(searchTerm)){
+        setInputType(InputType.arb)
+      }
     }
 
     if(searchTerm.length > 0) {
@@ -146,15 +160,6 @@ const Index = () => {
         type: MetamaskActions.SetInstalled,
         payload: installedSnap,
       });
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
-  const handleSendHelloClick = async () => {
-    try {
-      await sendHello();
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -200,8 +205,13 @@ const Index = () => {
           />
         )}
         <Search value={searchTerm} onChange={handleSearch} />
-        {/* <div>{balance}</div> */}
-        <Table titles={titles} columns={spaceNfts}/>
+        {!!inputType ? inputType === InputType.address
+          ?
+            <Table titles={titles} columns={spaceNfts}/>
+          :
+            <Send domain={searchTerm} chain={inputType as string} />
+          :<></>
+        }
       </CardContainer>
     </Container>
   );

@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
   "description": "An example Snap written in TypeScript.",
-  "proposedName": "TypeScript Example",
+  "proposedName": "SpaceID",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "gr6CjmhvTRoEOGrfLfCihs7HbfVVeKiQL22o3ZFtyjk=",
+    "shasum": "mygTjZTLl85PlgQqeEWzs73wwH+v0XuHW17eV+Mcd+8=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -18,6 +18,7 @@
     }
   },
   "initialPermissions": {
+    "endowment:transaction-insight": {},
     "snap_dialog": {},
     "endowment:rpc": {
       "dapps": true,

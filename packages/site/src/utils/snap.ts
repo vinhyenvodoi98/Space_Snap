@@ -63,4 +63,24 @@ export const sendHello = async () => {
   });
 };
 
+export const sendTransaction = async () => {
+  const [from] = await window.ethereum.request({
+    method: 'eth_requestAccounts'
+  }) as string[];
+
+  if (!from) {
+    throw new Error('Failed to get accounts.');
+  }
+
+  await window.ethereum.request({
+    method: 'eth_sendTransaction',
+    params: [{
+      from,
+      to: "0x2484930A74674AA452cB5b83599A2797f0e3a939",
+      value: 0x0
+      }
+    ],
+  });
+};
+
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');

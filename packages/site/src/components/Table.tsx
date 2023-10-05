@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { BscContractAddress } from '../config/spaceId';
 import { weiToEth } from '../helpers';
-import { MetaMaskContext } from '../hooks';
+import { MetamaskActions, MetaMaskContext } from '../hooks';
+import { sendTransaction } from '../utils';
 import apiOpenseaCall from '../utils/opensea';
 import { apiMetadataCall } from '../utils/space';
 import ExternalLink from './ExternalLink';
@@ -72,6 +73,19 @@ const Row = styled.div`
 const PrizeDiv = styled.div`
   width: 8rem;
 `
+const StyledButton = styled.button`
+  background-color: ${(props) => props.theme.colors.primary.default};
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #009c74; // Đổi màu khi hover
+  }
+`;
 
 interface TableProps {
   titles: { key: string; title: string }[];
@@ -90,14 +104,14 @@ interface OpenseaOrder {
 
 const widthIndex = (titleIndex: Number) => {
   return titleIndex === 0
-  ? '10%'
+  ? '5%'
   : titleIndex === 1
-  ? '20%'
+  ? '40%'
   : titleIndex === 2
   ? '10%'
   : titleIndex === 3
   ? '10%'
-  : '30%'
+  : '10%'
 }
 
 const TableRowComponent:React.FC<any> = ({column, titles}:any) => {
@@ -128,9 +142,17 @@ const TableRowComponent:React.FC<any> = ({column, titles}:any) => {
   }, [metadata])
 
   const currentPrize = useMemo(() => {
-    return orders.length > 0 ? state.web3 ? weiToEth(state.web3, orders[0].current_price) : "Loading" : "you can order"
+    return orders.length > 0 ? `${weiToEth(orders[0].current_price)} BNB` : "Create Order"
   },[orders])
 
+  const handleSendClick = async () => {
+    try {
+      await sendTransaction();
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
 
   return(
     <TableRow>
@@ -147,13 +169,15 @@ const TableRowComponent:React.FC<any> = ({column, titles}:any) => {
             :
             title.key === "prize" ?
             <Row>
-              <PrizeDiv>{`${currentPrize} BNB`}</PrizeDiv>
+              <PrizeDiv>{currentPrize}</PrizeDiv>
               <ExternalLink url={`https://opensea.io/assets/bsc/${BscContractAddress}/${column.identifier}`}/>
             </Row>
             : title.key === "name" ?
             <Row>
               {column[title.key]}
             </Row>
+            : title.key === "send" ?
+              <StyledButton onClick={handleSendClick}>Send</StyledButton>
             :
             column[title.key]
           }

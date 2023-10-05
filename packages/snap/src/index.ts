@@ -3,10 +3,12 @@ import { panel, text, heading } from '@metamask/snaps-ui';
 import { isObject, Json } from "@metamask/utils"
 
 async function getSpaceDomain() {
-  const response = await fetch(`http://localhost:8000/api/getName?address=0x2e552E3aD9f7446e9caB378c008315E0C26c0398&chain=bnb`);
+  const response = await fetch(
+    `https://space-snap-site.vercel.app/api/getName?address=0x2e552E3aD9f7446e9caB378c008315E0C26c0398&chain=bnb`,
+    );
+  console.log(response)
   return response.text();
 }
-
 
 export const onTransaction: OnTransactionHandler = async ({
   transaction,
@@ -14,19 +16,24 @@ export const onTransaction: OnTransactionHandler = async ({
 }) => {
   const insights: {type: string, params?: Json} = {type:"Unknow Transaction"}
 
-  if(!isObject(transaction)) return {insights}
-  console.log(transaction)
+  if(!isObject(transaction)) return {
+    content: panel([
+      heading('No data'),
+      text(
+        `As set up, you are paying,
+        )}%** in gas fees for this transaction.`,
+      ),
+    ]),
+  };
   return getSpaceDomain().then(name =>{
-    return snap.request({
-      method: 'snap_dialog',
-      params: {
-        type: 'alert',
-        content: panel([
-          text(`Hello, **${origin}**!`),
-          text(`SpaceId: ${name}`),
-        ]),
-      }
-    });
+    return {
+      content: panel([
+        heading('Transaction insights Snap'),
+        text(
+          `${name}`,
+        ),
+      ]),
+    };
   })
 };
 

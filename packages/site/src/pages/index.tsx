@@ -5,20 +5,15 @@ import {
   connectSnap,
   getSnap,
   isLocalSnap,
-  sendHello,
-  shouldDisplayReconnectButton,
 } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
-  ReconnectButton,
-  SendHelloButton,
   Card,
 } from '../components';
 import { defaultSnapOrigin } from '../config';
 import Table from '../components/Table';
 import Search from '../components/Search';
-import { getBalanceOf, getTokenOfOwnerByIndex } from '../utils/space';
 import { endsWithArb, endsWithBnb, filterSpaceNFT, isValidEthereumAddress } from '../helpers';
 import apiOpenseaCall from '../utils/opensea';
 import Send from '../components/Send';
@@ -105,22 +100,27 @@ export enum InputType {
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-  const titles = [
+  const [titles, setTitle] = useState([
     { key: 'image', title: 'Image' },
     { key: 'name', title: 'Domain' },
     { key: 'prize', title: 'Prize' },
     { key: 'expiration', title: 'Expiration Day' },
-    { key: 'key5', title: 'Send' },
-  ]
+    { key: 'send', title: 'Send' },
+  ])
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [balance, setBalance] = useState('')
   const [spaceNfts, setSpaceNfts] = useState<any>([])
   const [inputType, setInputType] = useState<InputType | null>(null)
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
+  const convertDomain = async(domain:string, chain:string) => {
+    const response = await fetch(`/api/getAddress?domain=${domain}&chain=${chain}`)
+    const data = await response.json()
+    return data.address
+  }
 
   useEffect(() => {
     const getBalance = async () => {
@@ -133,6 +133,20 @@ const Index = () => {
 
       if(endsWithBnb(searchTerm)){
         setInputType(InputType.bnb)
+        setTitle(prevTitles => {
+          return prevTitles.map(item => {
+            if (item.key === 'name') {
+              return { ...item, title: 'Owner' };
+            }
+            return item;
+          });
+        });
+        const address = await convertDomain(searchTerm, 'bnb')
+        const {nfts} = await apiOpenseaCall({url:`chain/bsc/account/${address}/nfts?limit=50`})
+        const spaceNfts = filterSpaceNFT(nfts);
+        const filterByName = spaceNfts.filter(nft => nft.name === searchTerm)
+        filterByName[0].name = address
+        setSpaceNfts(filterByName)
       }
 
       if(endsWithArb(searchTerm)){
@@ -203,11 +217,9 @@ const Index = () => {
           />
         )}
         <Search value={searchTerm} onChange={handleSearch} />
-        {!!inputType ? inputType === InputType.address
+        {!!inputType
           ?
             <Table titles={titles} columns={spaceNfts}/>
-          :
-            <Send domain={searchTerm} chain={inputType as string} />
           :<></>
         }
       </CardContainer>
@@ -216,39 +228,3 @@ const Index = () => {
 };
 
 export default Index;
-
-{/* {shouldDisplayReconnectButton(state.installedSnap) && (
-  <Card
-    content={{
-      title: 'Reconnect',
-      description:
-        'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
-      button: (
-        <ReconnectButton
-          onClick={handleConnectClick}
-          disabled={!state.installedSnap}
-        />
-      ),
-    }}
-    disabled={!state.installedSnap}
-  />
-)}
-<Card
-  content={{
-    title: 'Send Hello message',
-    description:
-      'Display a custom message within a confirmation screen in MetaMask.',
-    button: (
-      <SendHelloButton
-        onClick={handleSendHelloClick}
-        disabled={!state.installedSnap}
-      />
-    ),
-  }}
-  disabled={!state.installedSnap}
-  fullWidth={
-    isMetaMaskReady &&
-    Boolean(state.installedSnap) &&
-    !shouldDisplayReconnectButton(state.installedSnap)
-  }
-/> */}

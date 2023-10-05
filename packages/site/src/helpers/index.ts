@@ -1,4 +1,3 @@
-import Web3 from 'web3';
 import { BscContractAddress } from '../config/spaceId';
 
 export function isValidEthereumAddress(address: string): boolean {
@@ -41,7 +40,7 @@ export function endsWithArb(inputString: string): boolean {
   return regex.test(inputString);
 }
 
-export function weiToEth(web3: Web3, weiAmount: string): string {
-  const ethAmount = web3.utils.fromWei(weiAmount, 'ether');
-  return ethAmount;
+export function weiToEth(weiAmount: string): string {
+  const ethAmount = Number(weiAmount) / Math.pow(10, 18);
+  return ethAmount.toString();
 }

@@ -1,4 +1,3 @@
-import Web3 from 'web3';
 import { getSnaps } from './snap';
 
 /**
@@ -71,12 +70,12 @@ export const isFlask = async () => {
 };
 
 export const connectAccount = async () => {
-  const web3 = new Web3(window.ethereum);
-
   const account = await window.ethereum.request({
     method: 'eth_requestAccounts',
   });
-  const chainId = await web3.eth.getChainId();
+  const chainId = await window.ethereum.request({
+    method: 'eth_chainId'
+  })
 
   if (Number(chainId) !== 56) {
     await window.ethereum.request({

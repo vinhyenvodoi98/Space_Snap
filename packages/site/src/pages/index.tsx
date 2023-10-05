@@ -124,8 +124,6 @@ const Index = () => {
 
   useEffect(() => {
     const getBalance = async () => {
-      const bl = await getBalanceOf(searchTerm, state.contract);
-      setBalance(bl)
       if(isValidEthereumAddress(searchTerm)){
         setInputType(InputType.address)
         const {nfts} = await apiOpenseaCall({url:`chain/bsc/account/${searchTerm}/nfts?limit=50`})

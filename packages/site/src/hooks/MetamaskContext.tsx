@@ -6,7 +6,6 @@ import {
   useEffect,
   useReducer,
 } from 'react';
-import Web3 from 'web3';
 import { ContractABI, BscContractAddress } from '../config/spaceId';
 
 import { Snap } from '../types';
@@ -17,17 +16,11 @@ export type MetamaskState = {
   isFlask: boolean;
   installedSnap?: Snap;
   error?: Error;
-  web3: Web3 | null;
-  contract: any;
-  account: Array<string>
 };
 
 const initialState: MetamaskState = {
   snapsDetected: false,
   isFlask: false,
-  web3: null,
-  contract: null,
-  account: []
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -46,9 +39,6 @@ export enum MetamaskActions {
   SetSnapsDetected = 'SetSnapsDetected',
   SetError = 'SetError',
   SetIsFlask = 'SetIsFlask',
-  SetWeb3 = 'SetWeb3',
-  SetContract = 'SetContract',
-  SetAccount = 'SetAccount'
 }
 
 const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
@@ -72,21 +62,6 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
       return {
         ...state,
         error: action.payload,
-      };
-    case MetamaskActions.SetWeb3:
-      return {
-        ...state,
-        web3: action.payload,
-      };
-    case MetamaskActions.SetContract:
-      return {
-        ...state,
-        contract: action.payload,
-      };
-    case MetamaskActions.SetContract:
-      return {
-        ...state,
-        account: action.payload,
       };
     default:
       return state;
@@ -117,28 +92,7 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
       });
     };
 
-    const setWeb3 = async () => {
-      const web3 = new Web3(window.ethereum);
-      dispatch({
-        type: MetamaskActions.SetWeb3,
-        payload: web3,
-      });
-
-      const account = await connectAccount()
-      dispatch({
-        type: MetamaskActions.SetAccount,
-        payload: account,
-      });
-
-      const contract = new web3.eth.Contract(ContractABI, BscContractAddress);
-      dispatch({
-        type: MetamaskActions.SetContract,
-        payload: contract,
-      });
-    };
-
     setSnapsCompatibility();
-    setWeb3()
   }, [window.ethereum]);
 
   // Set installed snaps

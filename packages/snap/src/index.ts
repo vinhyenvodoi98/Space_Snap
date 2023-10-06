@@ -2,11 +2,10 @@ import { OnRpcRequestHandler, OnTransactionHandler } from '@metamask/snaps-types
 import { panel, text, heading } from '@metamask/snaps-ui';
 import { isObject, Json } from "@metamask/utils"
 
-async function getSpaceDomain() {
+async function getSpaceDomain(address:string) {
   const response = await fetch(
-    `https://space-snap-site.vercel.app/api/getName?address=0x2e552E3aD9f7446e9caB378c008315E0C26c0398&chain=bnb`,
+    `https://txs-saplings-client-rv7k.vercel.app/api/getName?address=${address}&chain=bnb`
     );
-  console.log(response)
   return response.text();
 }
 
@@ -20,17 +19,16 @@ export const onTransaction: OnTransactionHandler = async ({
     content: panel([
       heading('No data'),
       text(
-        `As set up, you are paying,
-        )}%** in gas fees for this transaction.`,
+        "Input of transaction not correct"
       ),
     ]),
   };
-  return getSpaceDomain().then(name =>{
+  return getSpaceDomain(transaction.to as string).then(response =>{
     return {
       content: panel([
-        heading('Transaction insights Snap'),
+        heading('Check domain before send'),
         text(
-          `${name}`,
+          `${transaction.to} is ${JSON.parse(response).name}`,
         ),
       ]),
     };
